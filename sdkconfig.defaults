@@ -1,0 +1,32 @@
+# ===================================================================
+# OpenP2P ESP32 客户端 — Kconfig 默认值 (开发计划 2.1 / 13 章)
+# 说明：
+#  - 控制面 WSS 走 TLS 1.3（上游 Go 用 TLS 1.3，见开发计划），
+#    原 sdkconfig 里 TLS1_3 未开，必须在 defaults 里强制开启。
+#  - 数据面走 TCP，LWIP 缓冲按 开发计划 调小（MSS 1400，窗口 ≤ 8KB）。
+#  - 主任务栈加大到 8KB，为控制面 + 数据面留栈余量。
+# ===================================================================
+
+# --- TLS 1.3（关键：控制面 WSS 必需） ---
+CONFIG_MBEDTLS_SSL_PROTO_TLS1_3=y
+# 保留 TLS1.2 兜底（上游若降级也能握上手）
+CONFIG_MBEDTLS_SSL_PROTO_TLS1_2=y
+
+# --- LWIP：数据面 TCP 缓冲调小（开发计划，总内存 < 200KB） ---
+CONFIG_LWIP_TCP_MSS=1400
+CONFIG_LWIP_TCP_WND_DEFAULT=11520
+CONFIG_LWIP_TCP_SND_BUF_DEFAULT=11520
+
+# --- 主任务栈（开发计划：≥ 8KB） ---
+CONFIG_ESP_MAIN_TASK_STACK_SIZE=8192
+
+# --- LWIP pcb/socket 池扩到 s2c symmetric punch 并发面（对齐 Go SymmetricHandshakeNum，先 300 档） ---
+# 注意硬顶：IDF FD_SETSIZE=64，vfs_lwip.c 静态断言要求 LWIP_SOCKET_OFFSET=64-MAX_SOCKETS≥6 → MAX_SOCKETS 最大 58；
+# 越界值（>253 被 Kconfig range 静默重置回 10；59..253 编译炸断言）。历史 命中=运气（实际池=10）。
+CONFIG_LWIP_MAX_SOCKETS=58
+CONFIG_LWIP_MAX_ACTIVE_TCP=190
+
+# --- CPU 主频（性能：恢复 240MHz 默认档，转发打包/AES/QUIC 全提速；板子供电路常供电） ---
+CONFIG_ESP_DEFAULT_CPU_FREQ_MHZ=240
+CONFIG_ESP32S3_DEFAULT_CPU_FREQ_MHZ=240
+

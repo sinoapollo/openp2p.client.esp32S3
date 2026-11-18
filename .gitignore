@@ -1,0 +1,16 @@
+# === 编译产物（含固件二进制 + 编译日志 + 绝对路径，绝不发布）===
+build/
+managed_components/
+
+# === sdkconfig 生成物（只提交 sdkconfig.defaults）===
+sdkconfig
+sdkconfig.old
+
+# === 本地私有配置覆盖（若你有本地 config 覆盖，别把真实凭据提交）===
+*.local.h
+
+# === 其它 ===
+__pycache__/
+*.pyc
+*.bin
+*.elf
